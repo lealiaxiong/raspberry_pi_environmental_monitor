@@ -1,0 +1,36 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    <h1><b>ENVIRONMENTAL MONITOR</b></h1>
+{% endblock %}
+
+{% block main %}
+    <script type=text/javascript src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script type=text/javascript>
+        $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+        $(function() {
+            $.getJSON($SCRIPT_ROOT+"/_read_sensors",
+                function(data) {
+                    $("#temperature").text("Temperature: " + data.temp_data + "°F")
+                    $("#humidity").text("Humidity: " + data.humid_data.toFixed(1) + "%")
+                    $("#pressure").text("Pressure: " + data.pressure_data.toFixed(1) + " hPa")
+                    $("#eCO2").text("eCO2: " + data.eCO2_data + " ppm")
+                    $("#tvoc").text("TVOC: " + data.tvoc_data + " ppb")
+                    $("#light").text("Light: " + data.light_data.toFixed(1) + " lux")
+                    $("#uv").text("UV index: " + data.uv_data)
+                    $("#now").text("Last updated: " + data.now)
+                });
+                setTimeout(arguments.callee, 2000);
+        });
+    </script>
+    
+    <h1 id=temperature>Temperature: ?</h1>
+    <h1 id=humidity>Humidity: ?</h1>
+    <h1 id=pressure>Pressure: ?</h1>
+    <h1 id=eCO2>eCO2: ?</h1>
+    <h1 id=tvoc>TVOC: ?</h1>
+    <h1 id=light>Light: ?</h1>
+    <h1 id=uv>UV index: ?</h1>
+
+    <footer id=now class="small text-muted">Last updated: ?</footer>
+{% endblock %}
