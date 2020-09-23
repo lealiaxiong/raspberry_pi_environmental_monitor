@@ -6,6 +6,7 @@ from multiprocessing import Process
 import numpy as np
 from bokeh.embed import server_document
 from bokeh.server.server import Server
+from bokeh.themes import Theme
 import bokeh.io
 import bokeh.models
 import bokeh.plotting
@@ -168,6 +169,8 @@ def bkapp(doc):
         source.stream(update_dict, rollover)
     
     doc.add_root(p_light)
+    theme = Theme(filename="theme.yaml")
+    doc.theme = theme
         
     pc = doc.add_periodic_callback(update, sample_frequency*1000)
         
