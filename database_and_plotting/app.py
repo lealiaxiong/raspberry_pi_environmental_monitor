@@ -166,17 +166,19 @@ def bkapp(doc):
         timestamp = update_dict['timestamps'][0]
         update_dict['timestamps'][0] = datetime.datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S.%f')
         source.stream(update_dict, rollover)
+    
+    doc.add_root(p_light)
         
     pc = doc.add_periodic_callback(update, sample_frequency*1000)
         
 
 @app.route('/')
 def index():
-    script = server_document("http://localhost:5006/bkapp")
+    script = server_document("http://192.168.0.106:5006/bkapp")
     return render_template('index.html', script=script, template="Flask")
     
 def bk_worker():
-    server = Server({'/bkapp': bkapp}, io_loop=IOLoop(), allow_websocket_origin=["localhost:5000"])
+    server = Server({'/bkapp': bkapp}, io_loop=IOLoop(), allow_websocket_origin=["localhost:5000", "0.0.0.0:5000", "192.168.0.106:5000", "192.168.0.106:5006"])
     server.start()
     server.io_loop.start()
 
@@ -187,4 +189,4 @@ process_read.start()
 process_plot.start()
 
 if __name__ == '__main__':
-	app.run(debug=True, host='0.0.0.0', port=5000)
+	app.run(debug=True, use_reloader=False, host='0.0.0.0', port=5000)
