@@ -11,7 +11,7 @@ The Raspberry Pi runs a Flask application that reads the data from the sensors, 
 <img src="/images/web_interface.png" alt="Screenshot of web interface" width="300">
 
 ## Software dependencies
-### Libraries for interfacing with sensors:
+### Libraries for interfacing with sensors
 - [Adafruit Blinka](https://pypi.org/project/Adafruit-Blinka/)
 - Adafruit CircuitPython drivers
   - [BME280](https://github.com/adafruit/Adafruit_CircuitPython_BME280)
