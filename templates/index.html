@@ -9,9 +9,9 @@
     <script type=text/javascript>
         $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
         $(function() {
-            $.getJSON($SCRIPT_ROOT+"/_read_sensors",
+            $.getJSON($SCRIPT_ROOT+"/_get_last_data",
                 function(data) {
-                    $("#temperature").text("Temperature: " + data.temp_data + "°F")
+                    $("#temperature").text("Temperature: " + data.temp_data.toFixed(1) + "°F")
                     $("#humidity").text("Humidity: " + data.humid_data.toFixed(1) + "%")
                     $("#pressure").text("Pressure: " + data.pressure_data.toFixed(1) + " hPa")
                     $("#eCO2").text("eCO2: " + data.eCO2_data + " ppm")
@@ -31,6 +31,10 @@
     <h1 id=tvoc>TVOC: ?</h1>
     <h1 id=light>Light: ?</h1>
     <h1 id=uv>UV index: ?</h1>
+    
+    <div class="mr-3">
+        {{ script|safe }}
+    </div>
 
     <footer id=now class="small text-muted">Last updated: ?</footer>
 {% endblock %}
