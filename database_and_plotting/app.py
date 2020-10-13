@@ -10,6 +10,7 @@ from bokeh.themes import Theme
 import bokeh.io
 import bokeh.models
 import bokeh.plotting
+import bokeh.layouts
 import bokeh.driving
 
 import board
@@ -68,7 +69,7 @@ def read_sensors():
             # Read BME280.
             temp_data = bme280.temperature
             # Convert temperature (C->F)
-            temp_data = int(temp_data) * 1.8 + 32
+            temp_data = temp_data * 1.8 + 32
             humid_data = bme280.humidity
             pressure_data = bme280.pressure
 
@@ -142,23 +143,76 @@ def bkapp(doc):
         
     source = bokeh.models.ColumnDataSource(data=data)
     
+    p_temp_hum = bokeh.plotting.figure(
+        x_axis_label="time",
+        y_axis_label="temperature (°F)",
+        x_axis_type="datetime"
+    )
+
+    temp_line = p_temp_hum.line(source=source, x="timestamps", y="temps")
+    p_temp_hum.y_range.renderers = [temp_line]
+    
+    hum_range = bokeh.models.DataRange1d()
+    p_temp_hum.extra_y_ranges = {"humidity": hum_range}
+    hum_line = p_temp_hum.line(source=source,x="timestamps", y="humidities", color="orange", y_range_name="humidity")
+    hum_range.renderers = [hum_line]
+    p_temp_hum.add_layout(bokeh.models.LinearAxis(y_range_name="humidity", axis_label="humidity (%)"), "right")
+    
+    p_temp_hum.yaxis[0].axis_label_text_color = '#1F77B4'
+    p_temp_hum.yaxis[1].axis_label_text_color = "orange"
+    
     p_light = bokeh.plotting.figure(
-        frame_width=500,
-        frame_height=175,
         x_axis_label="time",
         y_axis_label="light (lux)",
         x_axis_type="datetime"
     )
-    p_light.xaxis.formatter=bokeh.models.DatetimeTickFormatter(
-        seconds = ['%H:%M:%S'],
-        minutes = ['%H:%M:%S'],
-        hourmin = ['%H:%M:%S'],
-        days = ['%Y-%m-%d %H:%M:%S'],
-        months = ['%Y-%m-%d %H:%M:%S'],
-    )
-    p_light.x_range.range_padding = 0
-    
     light_line = p_light.line(source=source, x="timestamps", y="lights")
+
+    p_eco2_tvoc = bokeh.plotting.figure(
+        x_axis_label="time",
+        y_axis_label="eCO2 (ppm)",
+        x_axis_type="datetime"
+    )
+    eCO2_line = p_eco2_tvoc.line(source=source, x="timestamps", y="eCO2s")
+    p_eco2_tvoc.y_range.renderers = [eCO2_line]
+
+    tvoc_range = bokeh.models.DataRange1d()
+    p_eco2_tvoc.extra_y_ranges = {"tvoc": tvoc_range}
+    tvoc_line = p_eco2_tvoc.line(source=source, x="timestamps", y="tvocs", color="orange", y_range_name="tvoc")
+    tvoc_range.renderers = [tvoc_line]
+    p_eco2_tvoc.add_layout(bokeh.models.LinearAxis(y_range_name="tvoc", axis_label="TVOC (ppb)"), "right")
+
+    p_eco2_tvoc.yaxis[0].axis_label_text_color = '#1F77B4'
+    p_eco2_tvoc.yaxis[1].axis_label_text_color = "orange"
+
+    p_pressure = bokeh.plotting.figure(
+        x_axis_label="time",
+        y_axis_label="pressure (hPa)",
+        x_axis_type="datetime"
+    )
+    pressure_line = p_pressure.line(source=source, x="timestamps", y="pressures")
+
+    for p in (p_temp_hum, p_light, p_eco2_tvoc, p_pressure):
+        p.xaxis.formatter=bokeh.models.DatetimeTickFormatter(
+            seconds = ['%H:%M:%S'],
+            minutes = ['%H:%M:%S'],
+            hourmin = ['%H:%M:%S'],
+            days = ['%Y-%m-%d %H:%M:%S'],
+            months = ['%Y-%m-%d %H:%M:%S'],
+        )
+        p.xaxis.major_label_orientation = np.pi/4
+        p.x_range.range_padding = 0
+        if p.legend:
+            p.legend.background_fill_alpha=0
+            p.legend.border_line_alpha=0
+
+    grid = bokeh.layouts.gridplot(
+        [p_temp_hum, p_light, p_pressure, p_eco2_tvoc], 
+        ncols=2,
+        plot_height=175,
+        plot_width=400,
+        sizing_mode="stretch_both"
+    )
     
     @bokeh.driving.linear()
     def update(step):
@@ -168,7 +222,7 @@ def bkapp(doc):
         update_dict['timestamps'][0] = datetime.datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S.%f')
         source.stream(update_dict, rollover)
     
-    doc.add_root(p_light)
+    doc.add_root(grid)
     theme = Theme(filename="theme.yaml")
     doc.theme = theme
         
@@ -177,11 +231,20 @@ def bkapp(doc):
 
 @app.route('/')
 def index():
-    script = server_document("http://192.168.0.106:5006/bkapp")
+    script = server_document("http://192.168.0.105:5006/bkapp")
     return render_template('index.html', script=script, template="Flask")
     
 def bk_worker():
-    server = Server({'/bkapp': bkapp}, io_loop=IOLoop(), allow_websocket_origin=["localhost:5000", "0.0.0.0:5000", "192.168.0.106:5000", "192.168.0.106:5006"])
+    server = Server(
+        {'/bkapp': bkapp},
+        io_loop=IOLoop(),
+        allow_websocket_origin=[
+            "localhost:5000",
+            "0.0.0.0:5000",
+            "192.168.0.105:5000",
+            "192.168.0.105:5006"
+            ]
+        )
     server.start()
     server.io_loop.start()
 
