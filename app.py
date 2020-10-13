@@ -211,7 +211,7 @@ def bkapp(doc):
         ncols=2,
         plot_height=175,
         plot_width=400,
-        sizing_mode="stretch_both"
+        sizing_mode="stretch_width"
     )
     
     @bokeh.driving.linear()
